@@ -1,0 +1,4 @@
+filterSize = 0
+f0 = StopWordTermTupleFilter
+f1 = LengthTermTupleFilter
+f2 = PatternTermTupleFilter
