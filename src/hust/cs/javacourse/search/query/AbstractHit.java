@@ -31,7 +31,7 @@ public abstract class AbstractHit implements Comparable<AbstractHit> {
     /**
      * 命中的单词和对应的Posting键值对，对计算文档得分有用，对于一个查询命中结果，一个term对应的是Posting而不是PostingList
      */
-    protected Map<AbstractTerm, AbstractPosting> termPostingMapping = new TreeMap<AbstractTerm, AbstractPosting>();
+    protected Map<AbstractTerm, AbstractPosting> termPostingMapping = new TreeMap<>();
 
     /**
      * 该命中文档的得分，文档的得分通过Sort接口计算.每个文档得分默认值为1.0
@@ -54,7 +54,7 @@ public abstract class AbstractHit implements Comparable<AbstractHit> {
     public AbstractHit(int docId, String docPath) {
         this.docId = docId;
         this.docPath = docPath;
-        this.content = FileUtil.read(docPath);
+        //this.content = FileUtil.read(docPath);
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class AbstractHit implements Comparable<AbstractHit> {
         this.docId = docId;
         this.docPath = docPath;
         this.termPostingMapping.putAll(termPostingMapping);
-        this.content = FileUtil.read(docPath);
+        //this.content = FileUtil.read(docPath);
     }
 
     /**

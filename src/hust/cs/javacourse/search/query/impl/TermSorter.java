@@ -44,12 +44,16 @@ public class TermSorter {
 
     public List<Map.Entry<AbstractTerm, Integer>> sortByDefault() {
         List<Map.Entry<AbstractTerm, Integer>> entryList = getListOfMap();
-        entryList.sort(Map.Entry.comparingByValue());
+        entryList.sort(Map.Entry.comparingByValue((o1, o2) -> Integer.compare(o2, o1)));
         return entryList;
     }
 
     public List<Map.Entry<AbstractTerm, Integer>> sortByTerm() {
         return getListOfMap();
+    }
+
+    public void clear() {
+        termToVisitTimesMap.clear();
     }
 
     public List<Map.Entry<AbstractTerm, Integer>> sortBySorter(
@@ -76,7 +80,7 @@ public class TermSorter {
     @SuppressWarnings("unchecked")
     public void load(File file) {
         ObjectInputStream in = null;
-        if(file.exists()) {
+        if (file.exists()) {
             try {
                 in = new ObjectInputStream(new FileInputStream(file));
                 this.termToVisitTimesMap =
@@ -84,7 +88,7 @@ public class TermSorter {
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             } finally {
-                if(in != null) {
+                if (in != null) {
                     try {
                         in.close();
                     } catch (IOException e) {

@@ -4,6 +4,7 @@ import com.sun.istack.internal.NotNull;
 import hust.cs.javacourse.search.index.AbstractPosting;
 import hust.cs.javacourse.search.index.AbstractPostingList;
 import hust.cs.javacourse.search.index.AbstractTerm;
+import hust.cs.javacourse.search.index.impl.Posting;
 import hust.cs.javacourse.search.index.impl.Term;
 import hust.cs.javacourse.search.query.AbstractHit;
 import hust.cs.javacourse.search.query.AbstractIndexSearcher;
@@ -11,6 +12,7 @@ import hust.cs.javacourse.search.query.Sort;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class IndexSearcher extends AbstractIndexSearcher {
     @Override
@@ -35,7 +37,7 @@ public class IndexSearcher extends AbstractIndexSearcher {
         for (int i = 0; i < size; ++i) {
             AbstractPosting posting = postingList.get(i);
             int docId = posting.getDocId();
-            AbstractHit tempHit = new Hit(docId, index.getDocName(docId), new TreeMap<AbstractTerm, AbstractPosting>());
+            AbstractHit tempHit = new Hit(docId, index.getDocName(docId), new TreeMap<>());
             tempHit.getTermPostingMapping().put(queryTerm, posting);
             hitList.add(tempHit);
         }
@@ -108,39 +110,23 @@ public class IndexSearcher extends AbstractIndexSearcher {
     public AbstractHit[] search(AbstractTerm queryTerm1, AbstractTerm queryTerm2, @NotNull Sort sorter) {
         AbstractHit[] leftHitList = search(queryTerm1, sorter);
         AbstractHit[] rightHitList = search(queryTerm2, sorter);
-        List<AbstractPosting> postings1 = new ArrayList<>(), postings2 = new ArrayList<>();
-        for (AbstractHit hit : leftHitList) {
-            postings1.addAll(hit.getTermPostingMapping().values());
-        }
-        for (AbstractHit hit : rightHitList) {
-            postings2.addAll(hit.getTermPostingMapping().values());
-        }
-        postings1.sort(Comparator.comparingInt(AbstractPosting::getDocId));
-        postings2.sort(Comparator.comparingInt(AbstractPosting::getDocId));
 
-        List<AbstractHit> hitList = new ArrayList<>();
-
-        int i = 0, j = 0;
-        while (i < postings1.size() && j < postings2.size()) {
-            AbstractPosting posting1 = postings1.get(i), posting2 = postings2.get(j);
-            if (posting1.getDocId() == posting2.getDocId()) {
-                for (Integer position : posting1.getPositions()) {
-                    if (posting2.getPositions().contains(position + 1)) {
-                        int docID = posting1.getDocId();
-                        hitList.add(new Hit(docID, index.getDocName(docID), new TreeMap<AbstractTerm, AbstractPosting>() {{
-                            put(queryTerm1, posting1);
-                            put(queryTerm2, posting2);
-                        }}));
-                    }
+        List<AbstractHit> hitList = SetOperationUtil.getIntersection(leftHitList, rightHitList), resList = new ArrayList<>();
+        for (AbstractHit hit : hitList) {
+            List<Integer> integers = new ArrayList<>();
+            Map<AbstractTerm, AbstractPosting> postingListMap = hit.getTermPostingMapping();
+            for (Integer position : postingListMap.get(queryTerm1).getPositions()) {
+                if (postingListMap.get(queryTerm2).getPositions().contains(position + 1)) {
+                    integers.add(position);
                 }
-            } else if (posting1.getDocId() < posting2.getDocId()) {
-                ++i;
-            } else {
-                ++j;
             }
+            resList.add(new Hit(hit.getDocId(), hit.getDocPath(), new TreeMap<AbstractTerm, AbstractPosting>() {{
+                put(queryTerm1, new Posting(hit.getDocId(), integers.size(), integers));
+                put(queryTerm2, new Posting(hit.getDocId(), integers.size(), integers.stream().map(x -> x + 1).collect(Collectors.toList())));
+            }}));
         }
 
-        return optimize(hitList, sorter);
+        return optimize(resList, sorter);
     }
 
     public List<AbstractTerm> getRecommendTerm(AbstractTerm term, int size) {
@@ -158,7 +144,7 @@ public class IndexSearcher extends AbstractIndexSearcher {
     }
 
     public AbstractHit[] optimize(List<AbstractHit> hitList, Sort sorter) {
-        if(sorter != null ) {
+        if (sorter != null) {
             sorter.sort(hitList);
         }
         AbstractHit[] hitArray = new Hit[hitList.size()];

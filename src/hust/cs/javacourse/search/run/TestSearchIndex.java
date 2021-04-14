@@ -9,6 +9,7 @@ import hust.cs.javacourse.search.util.Config;
 
 import java.io.File;
 import java.text.ParseException;
+import java.util.Arrays;
 
 /**
  * 测试搜索
@@ -22,10 +23,10 @@ public class TestSearchIndex {
     public static void main(String[] args) {
         IndexSearcher searcher = new IndexSearcher();
         searcher.open(Config.INDEX_DIR + "index.dat");
-        searcher.getSorter().load(new File(Config.INDEX_DIR + "records.dat"));
-        /*try {
+        searcher.getSorter().load(new File(Config.INDEX_DIR + "statistics.dat"));
+        try {
             AbstractHit[] hits = searcher.search(
-                    OrderParser.parseOrder("according OR pollution"),
+                    OrderParser.parseOrder("according AND pollution AND death OR action AND action"),
                     new SimpleSorter()
             );
             //AbstractHit[] hits = searcher.search(new Term("according"), new Term("pollution"), new Sorter(), AbstractIndexSearcher.LogicalCombination.OR);
@@ -43,7 +44,8 @@ public class TestSearchIndex {
             searcher.getSorter().store(new File(Config.INDEX_DIR + "statistics.dat"));
         } catch (ParseException e) {
             e.printStackTrace();
-        }*/
-        AbstractHit[] hits = searcher.search(new Term("activity"), new SimpleSorter());
+        }
+        AbstractHit[] hits = searcher.search(new Term("coronavirus"), new Term("death"), new SimpleSorter());
+        System.out.println(Arrays.toString(hits));
     }
 }
